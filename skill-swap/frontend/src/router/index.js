@@ -73,6 +73,18 @@ const routes = [
     name: 'Exchanges',
     component: () => import('../views/Exchanges.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/questions',
+    name: 'Questions',
+    component: () => import('../views/Questions.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/questions/:id',
+    name: 'QuestionDetail',
+    component: () => import('../views/QuestionDetail.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

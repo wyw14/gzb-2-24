@@ -515,6 +515,257 @@ app.get('/api/users', authMiddleware, (req, res) => {
   res.json(filtered);
 });
 
+app.get('/api/questions', authMiddleware, (req, res) => {
+  const questions = readJson('questions.json');
+  const users = readJson('users.json');
+  const { skill, status, category, userId } = req.query;
+  let filtered = [...questions];
+
+  if (skill) {
+    filtered = filtered.filter(q => q.skillId === skill || q.skillName.includes(skill));
+  }
+  if (status) {
+    filtered = filtered.filter(q => q.status === status);
+  }
+  if (category) {
+    filtered = filtered.filter(q => q.category === category);
+  }
+  if (userId) {
+    filtered = filtered.filter(q => q.userId === userId);
+  }
+
+  const questionsWithUser = filtered.map(q => {
+    const user = users.find(u => u.id === q.userId);
+    return {
+      ...q,
+      authorName: user?.username || '匿名用户',
+      authorAvatar: user?.avatar
+    };
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  res.json(questionsWithUser);
+});
+
+app.get('/api/questions/:id', authMiddleware, (req, res) => {
+  const questions = readJson('questions.json');
+  const answers = readJson('answers.json');
+  const users = readJson('users.json');
+  const question = questions.find(q => q.id === req.params.id);
+
+  if (!question) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+
+  const author = users.find(u => u.id === question.userId);
+  const questionWithUser = {
+    ...question,
+    authorName: author?.username || '匿名用户',
+    authorAvatar: author?.avatar
+  };
+
+  const questionAnswers = answers.filter(a => a.questionId === req.params.id);
+  const answersWithUser = questionAnswers.map(a => {
+    const answerUser = users.find(u => u.id === a.userId);
+    return {
+      ...a,
+      authorName: answerUser?.username || '匿名用户',
+      authorAvatar: answerUser?.avatar,
+      authorRating: answerUser?.rating || 0
+    };
+  }).sort((a, b) => {
+    if (a.isAccepted && !b.isAccepted) return -1;
+    if (!a.isAccepted && b.isAccepted) return 1;
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
+
+  res.json({
+    question: questionWithUser,
+    answers: answersWithUser
+  });
+});
+
+app.post('/api/questions', authMiddleware, (req, res) => {
+  const { title, content, skillId, skillName, category } = req.body;
+
+  if (!title || !content || !skillId || !skillName) {
+    return res.status(400).json({ error: '请填写标题、内容和相关技能' });
+  }
+  if (title.length < 5 || title.length > 100) {
+    return res.status(400).json({ error: '标题长度需在5-100字之间' });
+  }
+  if (content.length < 10) {
+    return res.status(400).json({ error: '问题内容至少10个字' });
+  }
+
+  const questions = readJson('questions.json');
+  const newQuestion = {
+    id: uuidv4(),
+    userId: req.user.id,
+    title,
+    content,
+    skillId,
+    skillName,
+    category: category || '',
+    status: 'open',
+    acceptedAnswerId: null,
+    viewCount: 0,
+    answerCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  questions.push(newQuestion);
+  writeJson('questions.json', questions);
+
+  const users = readJson('users.json');
+  const user = users.find(u => u.id === req.user.id);
+  const result = {
+    ...newQuestion,
+    authorName: user?.username || '匿名用户',
+    authorAvatar: user?.avatar
+  };
+
+  res.json(result);
+});
+
+app.post('/api/questions/:id/answers', authMiddleware, (req, res) => {
+  const { content } = req.body;
+
+  if (!content || content.length < 5) {
+    return res.status(400).json({ error: '回答内容至少5个字' });
+  }
+
+  const questions = readJson('questions.json');
+  const questionIndex = questions.findIndex(q => q.id === req.params.id);
+  if (questionIndex === -1) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+  if (questions[questionIndex].status === 'resolved') {
+    return res.status(400).json({ error: '该问题已解决，不能再回答' });
+  }
+
+  const answers = readJson('answers.json');
+  const newAnswer = {
+    id: uuidv4(),
+    questionId: req.params.id,
+    userId: req.user.id,
+    content,
+    isAccepted: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  answers.push(newAnswer);
+  writeJson('answers.json', answers);
+
+  questions[questionIndex].answerCount = (questions[questionIndex].answerCount || 0) + 1;
+  questions[questionIndex].updatedAt = new Date().toISOString();
+  writeJson('questions.json', questions);
+
+  const users = readJson('users.json');
+  const user = users.find(u => u.id === req.user.id);
+  const result = {
+    ...newAnswer,
+    authorName: user?.username || '匿名用户',
+    authorAvatar: user?.avatar,
+    authorRating: user?.rating || 0
+  };
+
+  res.json(result);
+});
+
+app.put('/api/questions/:id/accept', authMiddleware, (req, res) => {
+  const { answerId } = req.body;
+
+  if (!answerId) {
+    return res.status(400).json({ error: '请指定要采纳的回答' });
+  }
+
+  const questions = readJson('questions.json');
+  const questionIndex = questions.findIndex(q => q.id === req.params.id);
+  if (questionIndex === -1) {
+    return res.status(404).json({ error: '问题不存在' });
+  }
+  if (questions[questionIndex].userId !== req.user.id) {
+    return res.status(403).json({ error: '只有提问者才能采纳回答' });
+  }
+  if (questions[questionIndex].status === 'resolved') {
+    return res.status(400).json({ error: '该问题已采纳过最佳回答' });
+  }
+
+  const answers = readJson('answers.json');
+  const answerIndex = answers.findIndex(a => a.id === answerId && a.questionId === req.params.id);
+  if (answerIndex === -1) {
+    return res.status(404).json({ error: '回答不存在' });
+  }
+
+  answers[answerIndex].isAccepted = true;
+  writeJson('answers.json', answers);
+
+  questions[questionIndex].status = 'resolved';
+  questions[questionIndex].acceptedAnswerId = answerId;
+  questions[questionIndex].updatedAt = new Date().toISOString();
+  writeJson('questions.json', questions);
+
+  const users = readJson('users.json');
+  const answerUserId = answers[answerIndex].userId;
+  const userIndex = users.findIndex(u => u.id === answerUserId);
+  if (userIndex !== -1) {
+    users[userIndex].skillPoints = (users[userIndex].skillPoints || 0) + 20;
+    if (!users[userIndex].acceptedAnswerCount) {
+      users[userIndex].acceptedAnswerCount = 0;
+    }
+    users[userIndex].acceptedAnswerCount += 1;
+    writeJson('users.json', users);
+  }
+
+  res.json({
+    question: questions[questionIndex],
+    answer: answers[answerIndex]
+  });
+});
+
+app.get('/api/users/:id/questions', authMiddleware, (req, res) => {
+  const questions = readJson('questions.json');
+  const userQuestions = questions.filter(q => q.userId === req.params.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(userQuestions);
+});
+
+app.get('/api/users/:id/answers', authMiddleware, (req, res) => {
+  const answers = readJson('answers.json');
+  const questions = readJson('questions.json');
+  const userAnswers = answers.filter(a => a.userId === req.params.id);
+
+  const answersWithQuestion = userAnswers.map(a => {
+    const question = questions.find(q => q.id === a.questionId);
+    return {
+      ...a,
+      questionTitle: question?.title || '',
+      questionStatus: question?.status || 'open'
+    };
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  res.json(answersWithQuestion);
+});
+
+app.get('/api/users/:id/qa-stats', authMiddleware, (req, res) => {
+  const questions = readJson('questions.json');
+  const answers = readJson('answers.json');
+  const userId = req.params.id;
+
+  const userQuestions = questions.filter(q => q.userId === userId);
+  const userAnswers = answers.filter(a => a.userId === userId);
+  const acceptedAnswers = userAnswers.filter(a => a.isAccepted);
+
+  const resolvedQuestions = userQuestions.filter(q => q.status === 'resolved');
+
+  res.json({
+    questionCount: userQuestions.length,
+    answerCount: userAnswers.length,
+    acceptedAnswerCount: acceptedAnswers.length,
+    resolvedQuestionCount: resolvedQuestions.length
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Skill Swap Server running on http://localhost:${PORT}`);
 });

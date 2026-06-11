@@ -36,6 +36,10 @@
               <el-icon><SwitchButton /></el-icon>
               <span>交换记录</span>
             </router-link>
+            <router-link to="/questions" class="nav-link">
+              <el-icon><QuestionFilled /></el-icon>
+              <span>问答区</span>
+            </router-link>
           </div>
           <div class="nav-user">
             <el-dropdown @command="handleCommand">
@@ -75,7 +79,7 @@ import { useUserStore } from './stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
   HomeFilled, Edit, Connection, ChatDotRound,
-  Share, Trophy, SwitchButton, User, ArrowDown
+  Share, Trophy, SwitchButton, User, ArrowDown, QuestionFilled
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

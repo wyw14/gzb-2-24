@@ -12,6 +12,12 @@
             <span>{{ user.exchangeCount || 0 }} 次交换</span>
             <span class="divider">|</span>
             <span>{{ user.skillPoints || 0 }} 技能点</span>
+            <span class="divider">|</span>
+            <span>{{ qaStats.questionCount || 0 }} 提问</span>
+            <span class="divider">|</span>
+            <span>{{ qaStats.answerCount || 0 }} 回答</span>
+            <span class="divider">|</span>
+            <span class="accepted">{{ qaStats.acceptedAnswerCount || 0 }} 次被采纳</span>
           </div>
           <p class="bio">{{ user.bio || '这个人很懒，什么都没写' }}</p>
         </div>
@@ -66,18 +72,81 @@
         <el-empty v-else description="暂无评价" />
       </div>
     </div>
+
+    <div class="card qa-section">
+      <div class="qa-tabs">
+        <span class="tab" :class="{ active: qaTab === 'questions' }" @click="qaTab = 'questions'">
+          TA的提问 <span class="count">{{ userQuestions.length }}</span>
+        </span>
+        <span class="tab" :class="{ active: qaTab === 'answers' }" @click="qaTab = 'answers'">
+          TA的回答 <span class="count">{{ userAnswers.length }}</span>
+        </span>
+      </div>
+
+      <div v-if="qaTab === 'questions'">
+        <div v-if="userQuestions.length" class="qa-list">
+          <div v-for="q in userQuestions" :key="q.id" class="qa-item" @click="goToQuestion(q.id)">
+            <div class="qa-status">
+              <el-tag v-if="q.status === 'resolved'" type="success" size="small">已解决</el-tag>
+              <el-tag v-else type="warning" size="small">待解决</el-tag>
+            </div>
+            <div class="qa-content">
+              <h4 class="qa-title">{{ q.title }}</h4>
+              <div class="qa-meta">
+                <el-tag type="info" size="small">{{ q.skillName }}</el-tag>
+                <span>{{ q.answerCount || 0 }} 回答</span>
+                <span class="dot">·</span>
+                <span>{{ formatTime(q.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无提问" />
+      </div>
+
+      <div v-else>
+        <div v-if="userAnswers.length" class="qa-list">
+          <div v-for="a in userAnswers" :key="a.id" class="qa-item" @click="goToQuestion(a.questionId)">
+            <div class="qa-status">
+              <el-tag v-if="a.isAccepted" type="success" size="small">已采纳</el-tag>
+              <el-tag v-else-if="a.questionStatus === 'resolved'" type="info" size="small">问题已解决</el-tag>
+              <el-tag v-else type="warning" size="small">待解决</el-tag>
+            </div>
+            <div class="qa-content">
+              <h4 class="qa-title">{{ a.questionTitle }}</h4>
+              <p class="qa-desc">{{ a.content }}</p>
+              <div class="qa-meta">
+                <span v-if="a.isAccepted" class="accepted-badge">🏆 回答被采纳</span>
+                <span>{{ formatTime(a.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无回答" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { authAPI, reviewAPI } from '../api'
+import { authAPI, reviewAPI, questionAPI } from '../api'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 const router = useRouter()
 const user = ref(null)
 const reviews = ref([])
+const qaTab = ref('questions')
+const userQuestions = ref([])
+const userAnswers = ref([])
+const qaStats = ref({
+  questionCount: 0,
+  answerCount: 0,
+  acceptedAnswerCount: 0,
+  resolvedQuestionCount: 0
+})
 
 const teachSkills = computed(() => user.value?.skills?.filter(s => s.type === 'teach') || [])
 const learnSkills = computed(() => user.value?.skills?.filter(s => s.type === 'learn') || [])
@@ -85,6 +154,9 @@ const learnSkills = computed(() => user.value?.skills?.filter(s => s.type === 'l
 onMounted(async () => {
   await loadUser()
   await loadReviews()
+  await loadQAStats()
+  await loadUserQuestions()
+  await loadUserAnswers()
 })
 
 async function loadUser() {
@@ -101,8 +173,37 @@ async function loadReviews() {
   } catch (e) {}
 }
 
+async function loadQAStats() {
+  try {
+    const res = await questionAPI.getUserQAStats(route.params.userId)
+    qaStats.value = res.data
+  } catch (e) {}
+}
+
+async function loadUserQuestions() {
+  try {
+    const res = await questionAPI.getUserQuestions(route.params.userId)
+    userQuestions.value = res.data
+  } catch (e) {}
+}
+
+async function loadUserAnswers() {
+  try {
+    const res = await questionAPI.getUserAnswers(route.params.userId)
+    userAnswers.value = res.data
+  } catch (e) {}
+}
+
+function goToQuestion(id) {
+  router.push(`/questions/${id}`)
+}
+
 function goToChat() {
   router.push(`/chat/${route.params.userId}`)
+}
+
+function formatTime(time) {
+  return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 </script>
 
@@ -225,5 +326,119 @@ function goToChat() {
   color: #666;
   line-height: 1.6;
   margin: 0;
+}
+
+.accepted {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.qa-section {
+  padding: 24px;
+}
+
+.qa-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.qa-tabs .tab {
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: #999;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qa-tabs .tab.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.qa-tabs .count {
+  background: #f0f2f5;
+  color: #999;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.qa-tabs .tab.active .count {
+  background: #e8ebf5;
+  color: #667eea;
+}
+
+.qa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qa-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qa-item:hover {
+  background: #f0f2f5;
+}
+
+.qa-status {
+  min-width: 80px;
+}
+
+.qa-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.qa-title {
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-desc {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.qa-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.qa-meta .dot {
+  color: #ddd;
+}
+
+.accepted-badge {
+  color: #67c23a;
+  font-weight: 500;
 }
 </style>

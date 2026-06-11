@@ -1,1 +1,41 @@
-[]
+[
+  {
+    "id": "skill-001",
+    "userId": "2cabe1b3-475c-4a56-b073-a1e9d7c9d06d",
+    "name": "JavaScript编程",
+    "category": "programming",
+    "type": "teach",
+    "level": "中级",
+    "description": "精通ES6+、React、Vue等前端框架",
+    "createdAt": "2026-06-11T02:20:00.000Z"
+  },
+  {
+    "id": "skill-002",
+    "userId": "2cabe1b3-475c-4a56-b073-a1e9d7c9d06d",
+    "name": "Python编程",
+    "category": "programming",
+    "type": "learn",
+    "description": "想学习Python数据分析和机器学习",
+    "createdAt": "2026-06-11T02:21:00.000Z"
+  },
+  {
+    "id": "skill-003",
+    "userId": "022adda7-120a-46fc-8612-43d194b775de",
+    "name": "英语口语",
+    "category": "language",
+    "type": "teach",
+    "level": "高级",
+    "description": "英语专业八级，有多年教学经验",
+    "createdAt": "2026-06-11T02:22:00.000Z"
+  },
+  {
+    "id": "skill-004",
+    "userId": "022adda7-120a-46fc-8612-43d194b775de",
+    "name": "吉他演奏",
+    "category": "music",
+    "type": "teach",
+    "level": "中级",
+    "description": "会弹吉他5年，擅长民谣弹唱",
+    "createdAt": "2026-06-11T02:23:00.000Z"
+  }
+]

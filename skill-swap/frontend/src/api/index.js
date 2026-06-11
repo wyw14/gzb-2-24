@@ -73,4 +73,15 @@ export const skillTreeAPI = {
   updateSkillTree: (data) => api.put('/skill-tree', data)
 }
 
+export const questionAPI = {
+  getQuestions: (params) => api.get('/questions', { params }),
+  getQuestion: (id) => api.get(`/questions/${id}`),
+  createQuestion: (data) => api.post('/questions', data),
+  createAnswer: (questionId, data) => api.post(`/questions/${questionId}/answers`, data),
+  acceptAnswer: (questionId, answerId) => api.put(`/questions/${questionId}/accept`, { answerId }),
+  getUserQuestions: (userId) => api.get(`/users/${userId}/questions`),
+  getUserAnswers: (userId) => api.get(`/users/${userId}/answers`),
+  getUserQAStats: (userId) => api.get(`/users/${userId}/qa-stats`)
+}
+
 export default api

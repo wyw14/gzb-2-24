@@ -1,0 +1,47 @@
+[
+  {
+    "id": "a-001",
+    "questionId": "q-001",
+    "userId": "2cabe1b3-475c-4a56-b073-a1e9d7c9d06d",
+    "content": "我个人的经验是，可以采用以下几种方式来优雅地处理async/await的错误：\n\n**1. 使用工具函数包装Promise**\n\n可以写一个to函数来包装Promise，这样就不用到处写try/catch了：\n```javascript\nfunction to(promise) {\n  return promise.then(data => [null, data]).catch(err => [err, null]);\n}\n\n// 使用方式\nasync function fetchData() {\n  const [err, data] = await to(api.getData());\n  if (err) {\n    // 处理错误\n    return;\n  }\n  // 使用data\n}\n```\n\n**2. 统一错误处理中间件**\n\n在Vue/React等框架中，可以使用全局错误处理来捕获异步错误。\n\n**3. 按层级处理**\n\n- 底层API调用：统一包装错误\n- 业务逻辑层：处理具体业务错误\n- UI层：展示用户友好的错误提示\n\n**4. 错误分类**\n\n根据错误类型进行不同的处理：\n- 网络错误：重试机制\n- 业务错误：提示用户\n- 未知错误：上报日志\n\n希望这些建议对你有帮助！",
+    "isAccepted": true,
+    "createdAt": "2026-06-10T11:00:00.000Z",
+    "updatedAt": "2026-06-10T11:00:00.000Z"
+  },
+  {
+    "id": "a-002",
+    "questionId": "q-001",
+    "userId": "022adda7-120a-46fc-8612-43d194b775de",
+    "content": "我觉得try/catch其实挺好的，关键是不要每个await都包一层。可以把多个相关的await放在同一个try块里：\n\n```javascript\nasync function processData() {\n  try {\n    const user = await getUser();\n    const orders = await getOrders(user.id);\n    const details = await getOrderDetails(orders[0].id);\n    return details;\n  } catch (error) {\n    // 统一处理这一组操作的错误\n    console.error('处理数据失败:', error);\n    throw error; // 或者返回默认值\n  }\n}\n```\n\n另外，建议在catch中区分错误类型，给出不同的处理方式。",
+    "isAccepted": false,
+    "createdAt": "2026-06-10T12:30:00.000Z",
+    "updatedAt": "2026-06-10T12:30:00.000Z"
+  },
+  {
+    "id": "a-003",
+    "questionId": "q-001",
+    "userId": "4f61ece3-5da9-4dbe-be1d-bee876380d4c",
+    "content": "推荐你看看这个库：https://github.com/scopsy/await-to-js\n\n它就是专门解决这个问题的，用起来很方便。\n\n另外，如果你用的是TypeScript，还可以获得更好的类型推断。",
+    "isAccepted": false,
+    "createdAt": "2026-06-10T13:45:00.000Z",
+    "updatedAt": "2026-06-10T13:45:00.000Z"
+  },
+  {
+    "id": "a-004",
+    "questionId": "q-002",
+    "userId": "022adda7-120a-46fc-8612-43d194b775de",
+    "content": "我也是英语专业的，分享一下我的经验：\n\n**1. 克服心理障碍最重要**\n   - 不要怕说错，Native speaker也会说错\n   - 找语伴练习，推荐Tandem或HelloTalk\n\n**2. 影子跟读法（Shadowing）**\n   - 听一句，立刻跟读一句\n   - 模仿语音语调\n   - 推荐材料：BBC 6 Minute English\n\n**3. 自言自语练习法**\n   - 描述你正在做的事情\n   - 每天花15分钟用英语思考\n\n**4. 输入输出相结合**\n   - 大量输入：看剧、听播客\n   - 及时输出：复述内容、写总结\n\n坚持三个月，你会看到明显进步的！",
+    "isAccepted": false,
+    "createdAt": "2026-06-11T10:00:00.000Z",
+    "updatedAt": "2026-06-11T10:00:00.000Z"
+  },
+  {
+    "id": "e425300b-c4d9-4f11-9c1f-9e074c70510e",
+    "questionId": "q-002",
+    "userId": "2cabe1b3-475c-4a56-b073-a1e9d7c9d06d",
+    "content": "分享一下我的方法：\n\n1. 每天早上听30分钟英语播客\n2. 找一个语言交换伙伴，每周练习2次\n3. 看英文电影时不开字幕\n4. 用英语写日记\n\n坚持很重要，加油！",
+    "isAccepted": false,
+    "createdAt": "2026-06-11T02:25:31.724Z",
+    "updatedAt": "2026-06-11T02:25:31.724Z"
+  }
+]
