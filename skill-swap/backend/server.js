@@ -639,6 +639,9 @@ app.post('/api/questions/:id/answers', authMiddleware, (req, res) => {
   if (questionIndex === -1) {
     return res.status(404).json({ error: '问题不存在' });
   }
+  if (questions[questionIndex].userId === req.user.id) {
+    return res.status(400).json({ error: '不能回答自己的问题' });
+  }
   if (questions[questionIndex].status === 'resolved') {
     return res.status(400).json({ error: '该问题已解决，不能再回答' });
   }
@@ -695,6 +698,9 @@ app.put('/api/questions/:id/accept', authMiddleware, (req, res) => {
   const answerIndex = answers.findIndex(a => a.id === answerId && a.questionId === req.params.id);
   if (answerIndex === -1) {
     return res.status(404).json({ error: '回答不存在' });
+  }
+  if (answers[answerIndex].userId === req.user.id) {
+    return res.status(400).json({ error: '不能采纳自己的回答' });
   }
 
   answers[answerIndex].isAccepted = true;

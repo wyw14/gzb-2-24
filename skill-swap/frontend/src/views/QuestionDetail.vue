@@ -56,13 +56,18 @@
             </div>
             <span class="time">{{ formatTime(answer.createdAt) }}</span>
             <el-button
-              v-if="canAccept && !answer.isAccepted && question?.status === 'open'"
+              v-if="canAccept && !answer.isAccepted && question?.status === 'open' && answer.userId !== userStore.user?.id"
               type="success"
               size="small"
               @click="acceptAnswer(answer.id)"
             >
               <el-icon><Check /></el-icon>采纳为最佳回答
             </el-button>
+            <el-tooltip v-else-if="canAccept && !answer.isAccepted && question?.status === 'open' && answer.userId === userStore.user?.id" content="不能采纳自己的回答" placement="top">
+              <el-button type="success" size="small" disabled>
+                <el-icon><Check /></el-icon>采纳为最佳回答
+              </el-button>
+            </el-tooltip>
           </div>
           <div class="answer-content">
             {{ answer.content }}
@@ -72,7 +77,7 @@
       <el-empty v-else description="暂无回答，快来抢沙发吧" />
     </div>
 
-    <div v-if="question?.status === 'open'" class="card answer-form-card">
+    <div v-if="question?.status === 'open' && !isQuestionAuthor" class="card answer-form-card">
       <h3 class="form-title">写回答</h3>
       <el-input
         v-model="answerContent"
@@ -89,6 +94,7 @@
         <span class="tip">回答被采纳可获得 20 技能点奖励</span>
       </div>
     </div>
+    <el-alert v-else-if="question?.status === 'open' && isQuestionAuthor" title="这是你发布的问题，不能回答自己的问题" type="info" :closable="false" show-icon />
     <el-alert v-else title="该问题已解决，不能再回答" type="success" :closable="false" />
   </div>
 </template>
@@ -109,8 +115,12 @@ const answers = ref([])
 const answerContent = ref('')
 const submitting = ref(false)
 
-const canAccept = computed(() => {
+const isQuestionAuthor = computed(() => {
   return question.value && question.value.userId === userStore.user?.id
+})
+
+const canAccept = computed(() => {
+  return isQuestionAuthor.value
 })
 
 onMounted(async () => {

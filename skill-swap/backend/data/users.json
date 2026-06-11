@@ -31,7 +31,7 @@
     "rating": 5,
     "reviewCount": 0,
     "exchangeCount": 0,
-    "skillPoints": 0,
+    "skillPoints": 20,
     "preferences": {
       "location": {
         "city": "",
@@ -41,7 +41,8 @@
       "onlinePreference": "both"
     },
     "skillTree": [],
-    "createdAt": "2026-06-04T07:32:50.596Z"
+    "createdAt": "2026-06-04T07:32:50.596Z",
+    "acceptedAnswerCount": 1
   },
   {
     "id": "2cabe1b3-475c-4a56-b073-a1e9d7c9d06d",

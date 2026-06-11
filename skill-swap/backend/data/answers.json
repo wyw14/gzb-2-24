@@ -31,7 +31,7 @@
     "questionId": "q-002",
     "userId": "022adda7-120a-46fc-8612-43d194b775de",
     "content": "我也是英语专业的，分享一下我的经验：\n\n**1. 克服心理障碍最重要**\n   - 不要怕说错，Native speaker也会说错\n   - 找语伴练习，推荐Tandem或HelloTalk\n\n**2. 影子跟读法（Shadowing）**\n   - 听一句，立刻跟读一句\n   - 模仿语音语调\n   - 推荐材料：BBC 6 Minute English\n\n**3. 自言自语练习法**\n   - 描述你正在做的事情\n   - 每天花15分钟用英语思考\n\n**4. 输入输出相结合**\n   - 大量输入：看剧、听播客\n   - 及时输出：复述内容、写总结\n\n坚持三个月，你会看到明显进步的！",
-    "isAccepted": false,
+    "isAccepted": true,
     "createdAt": "2026-06-11T10:00:00.000Z",
     "updatedAt": "2026-06-11T10:00:00.000Z"
   },
@@ -43,5 +43,14 @@
     "isAccepted": false,
     "createdAt": "2026-06-11T02:25:31.724Z",
     "updatedAt": "2026-06-11T02:25:31.724Z"
+  },
+  {
+    "id": "ed73a9ea-8358-4681-bb76-0e380944e9a9",
+    "questionId": "e6acdb3a-a8e7-4380-897d-0aaa42ca36c4",
+    "userId": "022adda7-120a-46fc-8612-43d194b775de",
+    "content": "这是我自己的回答，测试能否被采纳",
+    "isAccepted": false,
+    "createdAt": "2026-06-11T02:58:03.496Z",
+    "updatedAt": "2026-06-11T02:58:03.496Z"
   }
 ]
